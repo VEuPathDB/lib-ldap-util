@@ -28,18 +28,7 @@ class LDAP(private val config: LDAPConfig) {
 
   fun lookupOracleNetDesc(commonName: String): List<OracleNetDesc> {
     log.trace("lookupOracleNetDesc(commonName={})", commonName)
-
-    return getConnection()
-      .search(SearchRequest(
-        config.baseDN,
-        SearchScope.SUB,
-        Filter.createANDFilter(
-          Filter.create("cn=$commonName"),
-          Filter.create("objectClass=" + Constants.oracleObjectClass)
-        ),
-        Constants.oracleDescriptionKey
-      ))
-      .searchEntries
+    return performSearch(commonName, Constants.oracleObjectClass, Constants.oracleDescriptionKey)
       .map { OracleNetDesc(it.getAttribute(Constants.oracleDescriptionKey).value!!) }
   }
 
@@ -50,24 +39,27 @@ class LDAP(private val config: LDAPConfig) {
 
   fun lookupPostgresNetDesc(commonName: String): List<PostgresNetDesc> {
     log.trace("lookupOracleNetDesc(commonName={})", commonName)
-
-    return getConnection()
-      .search(SearchRequest(
-        config.baseDN,
-        SearchScope.SUB,
-        Filter.createANDFilter(
-          Filter.create("cn=$commonName"),
-          Filter.create("objectClass=" + Constants.postgresObjectClass)
-        ),
-        Constants.postgresConnectionParamKey
-      ))
-      .searchEntries
+    return performSearch(commonName, Constants.postgresObjectClass, Constants.postgresConnectionParamKey)
       .map { PostgresNetDesc(it.getAttribute(Constants.postgresConnectionParamKey).values!!) }
   }
 
   fun requireSingularNetDesc(commonName: String): NetDesc {
     log.trace("requireSingularNetDesc(commonName={})", commonName)
     return requireSingularNetDesc(lookupNetDesc(commonName), "available db description", commonName)
+  }
+
+  private fun performSearch(commonName: String, desiredObjectClass: String, desiredAttributeName: String): List<SearchResultEntry> {
+    return getConnection()
+      .search(SearchRequest(
+        config.baseDN,
+        SearchScope.SUB,
+        Filter.createANDFilter(
+          Filter.create("cn=$commonName"),
+          Filter.create("objectClass=$desiredObjectClass")
+        ),
+        desiredAttributeName
+      ))
+      .searchEntries
   }
 
   fun lookupNetDesc(commonName: String): List<NetDesc> {
@@ -77,7 +69,7 @@ class LDAP(private val config: LDAPConfig) {
         SearchScope.SUB,
         Filter.createANDFilter(
           Filter.create("cn=$commonName")
-        ),
+        )
       ))
       .searchEntries
       .map {

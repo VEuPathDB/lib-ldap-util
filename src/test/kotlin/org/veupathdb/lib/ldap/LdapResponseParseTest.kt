@@ -23,24 +23,29 @@ pgConnectionParam: dbname=mydbname
         Assertions.assertEquals("mydbname", desc.dbname)
     }
 
-    @Test
+    //@Test
     fun oracleLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
-        val response = ldap.requireSingularOracleNetDesc("toxo068n")
-        println(response.host + ":" + response.port + "/" + response.identifier + " (" + response.platform + ")")
+        println("Performing lookup of known oracle DB")
+        println(formatConnectionProps(ldap.requireSingularOracleNetDesc("toxo068n")))
     }
 
-    @Test
+    //@Test
     fun postgresLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
-        val response = ldap.requireSingularPostgresNetDesc("unidb")
-        println(response.host + ":" + response.port + "/" + response.identifier + " (" + response.platform + ")")
+        println("Performing lookup of known postgres DB")
+        println(formatConnectionProps(ldap.requireSingularPostgresNetDesc("unidb")))
     }
 
-    @Test
+    //@Test
     fun generalLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
-        println(ldap.lookupNetDesc("toxo068n").toString());
-        println(ldap.lookupNetDesc("unidb").toString());
+        println("Performing generic lookup of known oracle and postgres DBs")
+        println(formatConnectionProps(ldap.requireSingularNetDesc("toxo068n")))
+        println(formatConnectionProps(ldap.requireSingularNetDesc("unidb")))
+    }
+
+    private fun formatConnectionProps(netDesc: NetDesc): String {
+        return netDesc.host + ":" + netDesc.port + "/" + netDesc.identifier + " (" + netDesc.platform + ")"
     }
 }
