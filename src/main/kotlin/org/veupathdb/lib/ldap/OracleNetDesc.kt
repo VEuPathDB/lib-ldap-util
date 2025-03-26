@@ -2,6 +2,14 @@ package org.veupathdb.lib.ldap
 
 import java.math.BigInteger
 
+/*
+ * The goal of this class is to store the values needed to construct an
+ * Oracle DB connection string via direct setting (data class constructor)
+ * or using the Oracle OCI value stored in LDAP, e.g.
+ *
+ * DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=ares11.penn.apidb.org)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=acctdb.upenn.edu)))
+ */
+
 private const val HOST_PREFIX = "(HOST="
 private const val PORT_PREFIX = "(PORT="
 private const val SERVICE_NAME_PREFIX = "(SERVICE_NAME="
@@ -17,6 +25,9 @@ data class OracleNetDesc(
     string.requirePortValue(),
     string.requireServiceNameValue(),
   )
+  fun toNetDesc(): NetDesc {
+    return NetDesc(host, port, serviceName, Platform.ORACLE)
+  }
 }
 
 private fun String.requireHostValue() = requireValue(HOST_PREFIX, "HOST")
@@ -38,6 +49,11 @@ private fun String.requirePortValue(): UShort {
 
 private fun String.requireServiceNameValue(): String = requireValue(SERVICE_NAME_PREFIX, "SERVICE_NAME")
 
+/**
+ * Looks for the passed prefix in this String, reads the following characters
+ * until it sees VALUE_SUFFIX, and returns them.  If the string does not
+ * contain a value in this format, an exception is thrown using the name argument.
+ */
 private fun String.requireValue(prefix: String, name: String): String {
   val start = indexOf(prefix)
 
