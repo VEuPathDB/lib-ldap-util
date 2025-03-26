@@ -4,7 +4,15 @@ import com.unboundid.ldap.sdk.*
 import org.slf4j.LoggerFactory
 
 class LDAP(private val config: LDAPConfig) {
+
   private val log = LoggerFactory.getLogger(javaClass)
+
+  object Constants {
+    const val ORACLE_OBJECT_CLASS = "orclNetService"
+    const val ORACLE_DESCRIPTION_KEY = "orclNetDescString"
+    const val POSTGRES_OBJECT_CLASS = "PostgresServiceContext"
+    const val POSTGRES_CONNECTION_PARAM_KEY = "pgConnectionParam"
+  }
 
   private var ldapConnection: LDAPConnection? = null
 
@@ -15,32 +23,63 @@ class LDAP(private val config: LDAPConfig) {
 
   fun requireSingularOracleNetDesc(commonName: String): OracleNetDesc {
     log.trace("requireSingularOracleNetDesc(commonName={})", commonName)
-
-    val tmp = lookupOracleNetDesc(commonName)
-
-    if (tmp.isEmpty())
-      throw IllegalStateException("no OracleNetDescs found for common name $commonName")
-    if (tmp.size > 1)
-      throw IllegalStateException("multiple OracleNetDescs found for common name $commonName")
-
-    return tmp[0]
+    return requireSingularNetDesc(lookupOracleNetDesc(commonName), "oracle net description", commonName)
   }
 
   fun lookupOracleNetDesc(commonName: String): List<OracleNetDesc> {
     log.trace("lookupOracleNetDesc(commonName={})", commonName)
+    return performSearch(commonName, Constants.ORACLE_OBJECT_CLASS, Constants.ORACLE_DESCRIPTION_KEY)
+      .map { OracleNetDesc(it.getAttribute(Constants.ORACLE_DESCRIPTION_KEY).value!!) }
+  }
 
+  fun requireSingularPostgresNetDesc(commonName: String): PostgresNetDesc {
+    log.trace("requireSingularPostgresNetDesc(commonName={})", commonName)
+    return requireSingularNetDesc(lookupPostgresNetDesc(commonName), "postgres net description", commonName)
+  }
+
+  fun lookupPostgresNetDesc(commonName: String): List<PostgresNetDesc> {
+    log.trace("lookupPostgresNetDesc(commonName={})", commonName)
+    return performSearch(commonName, Constants.POSTGRES_OBJECT_CLASS, Constants.POSTGRES_CONNECTION_PARAM_KEY)
+      .map { PostgresNetDesc(it.getAttribute(Constants.POSTGRES_CONNECTION_PARAM_KEY).values!!) }
+  }
+
+  private fun performSearch(commonName: String, desiredObjectClass: String, desiredAttributeName: String): List<SearchResultEntry> {
     return getConnection()
       .search(SearchRequest(
-        config.oracleBaseDN,
+        config.baseDN,
         SearchScope.SUB,
         Filter.createANDFilter(
           Filter.create("cn=$commonName"),
-          Filter.create("objectClass=orclNetService")
+          Filter.create("objectClass=$desiredObjectClass")
         ),
-        "orclNetDescString"
+        desiredAttributeName
       ))
       .searchEntries
-      .map { OracleNetDesc(it.getAttribute("orclNetDescString").value!!) }
+  }
+
+  fun requireSingularNetDesc(commonName: String): NetDesc {
+    log.trace("requireSingularNetDesc(commonName={})", commonName)
+    return requireSingularNetDesc(lookupNetDesc(commonName), "available db description", commonName)
+  }
+
+  fun lookupNetDesc(commonName: String): List<NetDesc> {
+    return getConnection()
+      .search(SearchRequest(
+        config.baseDN,
+        SearchScope.SUB,
+        Filter.createANDFilter(
+          Filter.create("cn=$commonName")
+        )
+      ))
+      .searchEntries
+      .map {
+        val objClassValue = it.getAttribute("objectClass").values.first { value -> value != "top" }!!
+        when(objClassValue) {
+          Constants.POSTGRES_OBJECT_CLASS -> PostgresNetDesc(it.getAttribute(Constants.POSTGRES_CONNECTION_PARAM_KEY).values!!)
+          Constants.ORACLE_OBJECT_CLASS -> OracleNetDesc(it.getAttribute(Constants.ORACLE_DESCRIPTION_KEY).value!!)
+          else -> throw IllegalArgumentException("Object class $objClassValue is not supported.")
+        }
+      }
   }
 
   private fun getConnection(): LDAPConnection {
@@ -82,5 +121,14 @@ class LDAP(private val config: LDAPConfig) {
 
       return ldapConnection!!
     }
+  }
+
+  private fun <T> requireSingularNetDesc(netDesc: List<T>, descName: String, commonName: String): T {
+    if (netDesc.isEmpty())
+      throw IllegalArgumentException("no ${descName}s found for common name $commonName")
+    if (netDesc.size > 1)
+      throw IllegalArgumentException("multiple ${descName}s found for common name $commonName")
+
+    return netDesc[0]
   }
 }
