@@ -17,7 +17,7 @@ private const val VALUE_SUFFIX = ')'
 
 data class OracleNetDesc(
   override val host: String,
-  override val port: UShort,
+  override val port: Int,
   val serviceName: String
 ): NetDesc {
   constructor(string: String) : this(
@@ -25,13 +25,13 @@ data class OracleNetDesc(
     string.requirePortValue(),
     string.requireServiceNameValue(),
   )
-  override val identifier: String = serviceName
+  override val identifier: String get() = serviceName
   override val platform: Platform = Platform.ORACLE
 }
 
 private fun String.requireHostValue() = requireValue(HOST_PREFIX, "HOST")
 
-private fun String.requirePortValue(): UShort {
+private fun String.requirePortValue(): Int {
   val bi = try {
     BigInteger(requireValue(PORT_PREFIX, "PORT"))
   } catch (e: Throwable) {
@@ -43,7 +43,7 @@ private fun String.requirePortValue(): UShort {
   if (bi < BigInteger.ZERO)
     throw IllegalArgumentException("given orclNetDescString contained a PORT value that was less than zero")
 
-  return bi.toInt().toUShort()
+  return bi.toInt()
 }
 
 private fun String.requireServiceNameValue(): String = requireValue(SERVICE_NAME_PREFIX, "SERVICE_NAME")

@@ -6,7 +6,7 @@ enum class Platform {
 
 interface NetDesc {
     val host: String
-    val port: UShort
+    val port: Int
     val identifier: String
     val platform: Platform
 }

@@ -8,10 +8,10 @@ class LDAP(private val config: LDAPConfig) {
   private val log = LoggerFactory.getLogger(javaClass)
 
   object Constants {
-    const val oracleObjectClass = "orclNetService"
-    const val oracleDescriptionKey = "orclNetDescString"
-    const val postgresObjectClass = "PostgresServiceContext"
-    const val postgresConnectionParamKey = "pgConnectionParam"
+    const val ORACLE_OBJECT_CLASS = "orclNetService"
+    const val ORACLE_DESCRIPTION_KEY = "orclNetDescString"
+    const val POSTGRES_OBJECT_CLASS = "PostgresServiceContext"
+    const val POSTGRES_CONNECTION_PARAM_KEY = "pgConnectionParam"
   }
 
   private var ldapConnection: LDAPConnection? = null
@@ -28,8 +28,8 @@ class LDAP(private val config: LDAPConfig) {
 
   fun lookupOracleNetDesc(commonName: String): List<OracleNetDesc> {
     log.trace("lookupOracleNetDesc(commonName={})", commonName)
-    return performSearch(commonName, Constants.oracleObjectClass, Constants.oracleDescriptionKey)
-      .map { OracleNetDesc(it.getAttribute(Constants.oracleDescriptionKey).value!!) }
+    return performSearch(commonName, Constants.ORACLE_OBJECT_CLASS, Constants.ORACLE_DESCRIPTION_KEY)
+      .map { OracleNetDesc(it.getAttribute(Constants.ORACLE_DESCRIPTION_KEY).value!!) }
   }
 
   fun requireSingularPostgresNetDesc(commonName: String): PostgresNetDesc {
@@ -38,14 +38,9 @@ class LDAP(private val config: LDAPConfig) {
   }
 
   fun lookupPostgresNetDesc(commonName: String): List<PostgresNetDesc> {
-    log.trace("lookupOracleNetDesc(commonName={})", commonName)
-    return performSearch(commonName, Constants.postgresObjectClass, Constants.postgresConnectionParamKey)
-      .map { PostgresNetDesc(it.getAttribute(Constants.postgresConnectionParamKey).values!!) }
-  }
-
-  fun requireSingularNetDesc(commonName: String): NetDesc {
-    log.trace("requireSingularNetDesc(commonName={})", commonName)
-    return requireSingularNetDesc(lookupNetDesc(commonName), "available db description", commonName)
+    log.trace("lookupPostgresNetDesc(commonName={})", commonName)
+    return performSearch(commonName, Constants.POSTGRES_OBJECT_CLASS, Constants.POSTGRES_CONNECTION_PARAM_KEY)
+      .map { PostgresNetDesc(it.getAttribute(Constants.POSTGRES_CONNECTION_PARAM_KEY).values!!) }
   }
 
   private fun performSearch(commonName: String, desiredObjectClass: String, desiredAttributeName: String): List<SearchResultEntry> {
@@ -62,6 +57,11 @@ class LDAP(private val config: LDAPConfig) {
       .searchEntries
   }
 
+  fun requireSingularNetDesc(commonName: String): NetDesc {
+    log.trace("requireSingularNetDesc(commonName={})", commonName)
+    return requireSingularNetDesc(lookupNetDesc(commonName), "available db description", commonName)
+  }
+
   fun lookupNetDesc(commonName: String): List<NetDesc> {
     return getConnection()
       .search(SearchRequest(
@@ -75,8 +75,8 @@ class LDAP(private val config: LDAPConfig) {
       .map {
         val objClassValue = it.getAttribute("objectClass").values.first { value -> value != "top" }!!
         when(objClassValue) {
-          Constants.postgresObjectClass -> PostgresNetDesc(it.getAttribute(Constants.postgresConnectionParamKey).values!!)
-          Constants.oracleObjectClass -> OracleNetDesc(it.getAttribute(Constants.oracleDescriptionKey).value!!)
+          Constants.POSTGRES_OBJECT_CLASS -> PostgresNetDesc(it.getAttribute(Constants.POSTGRES_CONNECTION_PARAM_KEY).values!!)
+          Constants.ORACLE_OBJECT_CLASS -> OracleNetDesc(it.getAttribute(Constants.ORACLE_DESCRIPTION_KEY).value!!)
           else -> throw IllegalArgumentException("Object class $objClassValue is not supported.")
         }
       }
