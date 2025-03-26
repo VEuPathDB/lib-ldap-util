@@ -23,21 +23,21 @@ pgConnectionParam: dbname=mydbname
         Assertions.assertEquals("mydbname", desc.dbname)
     }
 
-    @Test
+    //@Test
     fun oracleLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
         println("Performing lookup of known oracle DB")
         println(formatConnectionProps(ldap.requireSingularOracleNetDesc("toxo068n")))
     }
 
-    @Test
+    //@Test
     fun postgresLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
         println("Performing lookup of known postgres DB")
         println(formatConnectionProps(ldap.requireSingularPostgresNetDesc("unidb")))
     }
 
-    @Test
+    //@Test
     fun generalLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
         println("Performing generic lookup of known oracle and postgres DBs")
