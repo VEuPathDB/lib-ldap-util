@@ -13,31 +13,31 @@ class LdapResponseParseTest {
         val ldapResponse =
 """
 dn: cn=unidb,cn=PostgresContext,ou=Applications,dc=apidb,dc=org
-pgConnectionParam: host=dbserver.example.com
+pgConnectionParam: host=mydb.example.com
 pgConnectionParam: port=5432
 pgConnectionParam: dbname=mydbname
 """
         val desc = PostgresNetDesc(ldapResponse)
-        Assertions.assertEquals("dbserver.example.com", desc.host)
+        Assertions.assertEquals("mydb.example.com", desc.host)
         Assertions.assertEquals(5432.toUShort(), desc.port)
         Assertions.assertEquals("mydbname", desc.dbname)
     }
 
-    //@Test
+    @Test
     fun oracleLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
-        val response = ldap.requireSingularOracleNetDesc("toxo068n").toNetDesc()
+        val response = ldap.requireSingularOracleNetDesc("toxo068n")
         println(response.host + ":" + response.port + "/" + response.identifier + " (" + response.platform + ")")
     }
 
-    //@Test
+    @Test
     fun postgresLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
-        val response = ldap.requireSingularPostgresNetDesc("unidb").toNetDesc()
+        val response = ldap.requireSingularPostgresNetDesc("unidb")
         println(response.host + ":" + response.port + "/" + response.identifier + " (" + response.platform + ")")
     }
 
-    //@Test
+    @Test
     fun generalLookup() {
         val ldap = LDAP(LDAPConfig(listOf(LDAPHost.ofString("localhost:8389")), "ou=applications,dc=apidb,dc=org"))
         println(ldap.lookupNetDesc("toxo068n").toString());

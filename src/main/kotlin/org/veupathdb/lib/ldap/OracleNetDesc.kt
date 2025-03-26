@@ -7,7 +7,7 @@ import java.math.BigInteger
  * Oracle DB connection string via direct setting (data class constructor)
  * or using the Oracle OCI value stored in LDAP, e.g.
  *
- * DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=ares11.penn.apidb.org)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=acctdb.upenn.edu)))
+ * DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=mydb.example.com)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=myservicename)))
  */
 
 private const val HOST_PREFIX = "(HOST="
@@ -16,18 +16,17 @@ private const val SERVICE_NAME_PREFIX = "(SERVICE_NAME="
 private const val VALUE_SUFFIX = ')'
 
 data class OracleNetDesc(
-  val host: String,
-  val port: UShort,
-  val serviceName: String,
-) {
+  override val host: String,
+  override val port: UShort,
+  val serviceName: String
+): NetDesc {
   constructor(string: String) : this(
     string.requireHostValue(),
     string.requirePortValue(),
     string.requireServiceNameValue(),
   )
-  fun toNetDesc(): NetDesc {
-    return NetDesc(host, port, serviceName, Platform.ORACLE)
-  }
+  override val identifier: String = serviceName
+  override val platform: Platform = Platform.ORACLE
 }
 
 private fun String.requireHostValue() = requireValue(HOST_PREFIX, "HOST")

@@ -1,10 +1,10 @@
 package org.veupathdb.lib.ldap
 
 data class PostgresNetDesc(
-    val host: String,
-    val port: UShort,
+    override val host: String,
+    override val port: UShort,
     val dbname: String
-) {
+): NetDesc {
     constructor(ldapResponse: String) : this(
         requireValue(ldapResponse, "host") { it },
         requireValue(ldapResponse, "port") { it.toUShort() },
@@ -15,9 +15,8 @@ data class PostgresNetDesc(
         requireValue(propertyStrings, "port") { it.toUShort() },
         requireValue(propertyStrings, "dbname") { it }
     )
-    fun toNetDesc(): NetDesc {
-        return NetDesc(host, port, dbname, Platform.POSTGRES)
-    }
+    override val identifier: String = dbname
+    override val platform: Platform = Platform.POSTGRES
 }
 
 fun <T> requireValue(propertyStrings: Array<String>, propName: String, converter: (s: String) -> T): T {

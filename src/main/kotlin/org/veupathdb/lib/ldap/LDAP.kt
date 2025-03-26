@@ -82,8 +82,8 @@ class LDAP(private val config: LDAPConfig) {
       .searchEntries
       .map {
         when(it.getAttribute("objectClass").values.first { value -> value != "top" }!!) {
-          Constants.postgresObjectClass -> PostgresNetDesc(it.getAttribute(Constants.postgresConnectionParamKey).values!!).toNetDesc()
-          Constants.oracleObjectClass -> OracleNetDesc(it.getAttribute(Constants.oracleDescriptionKey).value!!).toNetDesc()
+          Constants.postgresObjectClass -> PostgresNetDesc(it.getAttribute(Constants.postgresConnectionParamKey).values!!)
+          Constants.oracleObjectClass -> OracleNetDesc(it.getAttribute(Constants.oracleDescriptionKey).value!!)
           else -> throw IllegalArgumentException("Object class " + it.getAttribute("objectClass").value!! + " is not supported.")
         }
       }
