@@ -10,7 +10,7 @@ class LDAP(private val config: LDAPConfig) {
   object Constants {
     const val ORACLE_OBJECT_CLASS = "orclNetService"
     const val ORACLE_DESCRIPTION_KEY = "orclNetDescString"
-    const val POSTGRES_OBJECT_CLASS = "PostgresServiceContext"
+    const val POSTGRES_OBJECT_CLASS = "pgNetService"
     const val POSTGRES_CONNECTION_PARAM_KEY = "pgConnectionParam"
   }
 
